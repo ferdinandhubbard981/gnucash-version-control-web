@@ -1,0 +1,60 @@
+@rendermode InteractiveServer
+@inject HttpClient Http
+
+<h3>Upload Files</h3>
+
+<InputFile OnChange="HandleFile1Selection" />
+<InputFile OnChange="HandleFile2Selection" />
+
+<button @onclick="UploadFiles">Upload</button>
+
+<p><strong>Result:</strong>@((MarkupString)Result) </p>
+
+
+@code {
+    private IBrowserFile? file1;
+    private IBrowserFile? file2;
+    private string Result = "No files uploaded yet.";
+
+    private void HandleFile1Selection(InputFileChangeEventArgs e)
+    {
+        file1 = e.File;
+    }
+
+    private void HandleFile2Selection(InputFileChangeEventArgs e)
+    {
+        file2 = e.File;
+    }
+
+    private async void UploadFiles()
+    {
+        if (file1 == null || file2 == null)
+        {
+            Result = "Please select both files.";
+            return;
+        }
+
+        var content = new MultipartFormDataContent();
+        content.Add(new StreamContent(file1.OpenReadStream(file1.Size)), "file1", file1.Name);
+        content.Add(new StreamContent(file2.OpenReadStream(file2.Size)), "file2", file2.Name);
+        try
+        {
+            var response = await Http.PostAsync("http://localhost:5170/diff", content);
+
+            if (response.IsSuccessStatusCode)
+            {
+                Result = await response.Content.ReadAsStringAsync();
+                Result = Result.Replace("\n", "<Br/>");
+            }
+            else
+            {
+                Result = "Error uploading files.";
+            }
+        }
+        catch (Exception ex)
+        {
+            Result = $"Error: {ex.Message}";
+        }
+        await InvokeAsync(StateHasChanged);
+    }
+}
