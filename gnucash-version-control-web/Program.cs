@@ -7,7 +7,7 @@ builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
 builder.Services.AddHttpClient();
-
+builder.Configuration.AddEnvironmentVariables();
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

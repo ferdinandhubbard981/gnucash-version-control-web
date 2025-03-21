@@ -1,5 +1,9 @@
+@using System.Data
+@using System.Runtime.CompilerServices;
+@using System.Data;
 @rendermode InteractiveServer
 @inject HttpClient Http
+@inject IConfiguration Configuration
 
 <h3>Upload Files</h3>
 
@@ -12,6 +16,14 @@
 
 
 @code {
+    private string apiUrl;
+
+    protected override void OnInitialized()
+    {
+        string? temp = Configuration["ApiSettings:BaseUrl"];
+        if (temp == null) throw new NoNullAllowedException("You have not set ApiSettings:BaseUrl environment variable");
+        apiUrl = temp;
+    }
     private IBrowserFile? file1;
     private IBrowserFile? file2;
     private string Result = "No files uploaded yet.";
@@ -39,7 +51,7 @@
         content.Add(new StreamContent(file2.OpenReadStream(file2.Size)), "file2", file2.Name);
         try
         {
-            var response = await Http.PostAsync("http://localhost:5170/diff", content);
+            var response = await Http.PostAsync($"{this.apiUrl}/diff", content);
 
             if (response.IsSuccessStatusCode)
             {
