@@ -49,24 +49,15 @@
         var content = new MultipartFormDataContent();
         content.Add(new StreamContent(file1.OpenReadStream(file1.Size)), "file1", file1.Name);
         content.Add(new StreamContent(file2.OpenReadStream(file2.Size)), "file2", file2.Name);
-        try
-        {
-            var response = await Http.PostAsync($"{this.apiUrl}/diff", content);
+        var response = await Http.PostAsync($"{this.apiUrl}/diff", content);
+        Result = await response.Content.ReadAsStringAsync();
+        Result = Result.Replace("\n", "<Br/>");
 
-            if (response.IsSuccessStatusCode)
-            {
-                Result = await response.Content.ReadAsStringAsync();
-                Result = Result.Replace("\n", "<Br/>");
-            }
-            else
-            {
-                Result = "Error uploading files.";
-            }
-        }
-        catch (Exception ex)
+        if (!response.IsSuccessStatusCode)
         {
-            Result = $"Error: {ex.Message}";
+            Result = $"Error: {Result}.";
         }
+
         await InvokeAsync(StateHasChanged);
     }
 }
