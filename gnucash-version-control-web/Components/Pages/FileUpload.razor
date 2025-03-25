@@ -1,63 +1,124 @@
-@using System.Data
-@using System.Runtime.CompilerServices;
-@using System.Data;
-@rendermode InteractiveServer
-@inject HttpClient Http
-@inject IConfiguration Configuration
-
-<h3>Upload Files</h3>
-
-<InputFile OnChange="HandleFile1Selection" />
-<InputFile OnChange="HandleFile2Selection" />
-
-<button @onclick="UploadFiles">Upload</button>
-
-<p><strong>Result:</strong>@((MarkupString)Result) </p>
-
-
-@code {
-    private string apiUrl;
-
-    protected override void OnInitialized()
-    {
-        string? temp = Configuration["ApiSettings:BaseUrl"];
-        if (temp == null) throw new NoNullAllowedException("You have not set ApiSettings:BaseUrl environment variable");
-        apiUrl = temp;
-    }
-    private IBrowserFile? file1;
-    private IBrowserFile? file2;
-    private string Result = "No files uploaded yet.";
-
-    private void HandleFile1Selection(InputFileChangeEventArgs e)
-    {
-        file1 = e.File;
-    }
-
-    private void HandleFile2Selection(InputFileChangeEventArgs e)
-    {
-        file2 = e.File;
-    }
-
-    private async void UploadFiles()
-    {
-        if (file1 == null || file2 == null)
-        {
-            Result = "Please select both files.";
-            return;
-        }
-
-        var content = new MultipartFormDataContent();
-        content.Add(new StreamContent(file1.OpenReadStream(file1.Size)), "file1", file1.Name);
-        content.Add(new StreamContent(file2.OpenReadStream(file2.Size)), "file2", file2.Name);
-        var response = await Http.PostAsync($"{this.apiUrl}/diff", content);
-        Result = await response.Content.ReadAsStringAsync();
-        Result = Result.Replace("\n", "<Br/>");
-
-        if (!response.IsSuccessStatusCode)
-        {
-            Result = $"Error: {Result}.";
-        }
-
-        await InvokeAsync(StateHasChanged);
-    }
-}
+  @using System.Data
+  @using System.Runtime.CompilerServices;
+  @using System.Data;
+  @rendermode InteractiveServer
+  @inject HttpClient Http
+  @inject IConfiguration Configuration
+  
+  <div class="container">
+      <h2 class="title">Gnucash diff</h2>
+        <p>This tool displays the diff between two gnucash files in a human readable format.</p>
+      <div class="button-group">
+          <a href="https://drive.google.com/file/d/1i0zkOpLZL2nlWidl1k5gEs8Akj7IVTaJ/view?usp=sharing" target="_blank" download>
+              <button class="download-button">Download Demo Data</button>
+          </a>
+      </div>
+  
+      <div class="upload-section">
+          <label for="oldFile" class="file-label">Old File:</label>
+          <InputFile id="oldFile" OnChange="HandleFile1Selection" class="file-input" />
+      </div>
+  
+      <div class="upload-section">
+          <label for="newFile" class="file-label">New File:</label>
+          <InputFile id="newFile" OnChange="HandleFile2Selection" class="file-input" />
+      </div>
+  
+      <button class="upload-button" @onclick="UploadFiles">Upload</button>
+  
+      <p class="result"><strong>Diff:</strong> @((MarkupString)Diff)</p>
+  </div>
+  
+  <style>
+      .container {
+          width: 100%;
+          margin: auto;
+          text-align: center;
+          padding: 20px;
+          border: 1px solid #ddd;
+          border-radius: 10px;
+          background-color: #f9f9f9;
+      }
+      .title {
+          font-size: 24px;
+          margin-bottom: 20px;
+      }
+      .button-group {
+          margin-bottom: 20px;
+      }
+      .download-button, .upload-button {
+          background-color: #007bff;
+          color: white;
+          padding: 10px 15px;
+          border: none;
+          border-radius: 5px;
+          cursor: pointer;
+          margin: 10px;
+      }
+      .download-button:hover, .upload-button:hover {
+          background-color: #0056b3;
+      }
+      .upload-section {
+          margin: 10px 0;
+      }
+      .file-label {
+          font-weight: bold;
+          display: block;
+      }
+      .file-input {
+          margin-top: 5px;
+      }
+      .result {
+          margin-top: 20px;
+          font-size: 16px;
+          text-align: left;
+          padding-left: 20px;
+      }
+  </style>
+  
+  @code {
+      private string apiUrl;
+  
+      protected override void OnInitialized()
+      {
+          string? temp = Configuration["ApiSettings:BaseUrl"];
+          if (temp == null) throw new NoNullAllowedException("You have not set ApiSettings:BaseUrl environment variable");
+          apiUrl = temp;
+      }
+      private IBrowserFile? file1;
+      private IBrowserFile? file2;
+      private string Diff = "No files uploaded yet.";
+  
+      private void HandleFile1Selection(InputFileChangeEventArgs e)
+      {
+          file1 = e.File;
+      }
+  
+      private void HandleFile2Selection(InputFileChangeEventArgs e)
+      {
+          file2 = e.File;
+      }
+  
+      private async void UploadFiles()
+      {
+          if (file1 == null || file2 == null)
+          {
+              Diff = "Please select both files.";
+              return;
+          }
+  
+          var content = new MultipartFormDataContent();
+          content.Add(new StreamContent(file1.OpenReadStream(file1.Size)), "file1", file1.Name);
+          content.Add(new StreamContent(file2.OpenReadStream(file2.Size)), "file2", file2.Name);
+          var response = await Http.PostAsync($"{this.apiUrl}/diff", content);
+          Diff = await response.Content.ReadAsStringAsync();
+          Diff = Diff.Replace("\n", "<Br/>");
+  
+          if (!response.IsSuccessStatusCode)
+          {
+              Diff = $"Error: {Diff}.";
+          }
+  
+          await InvokeAsync(StateHasChanged);
+      }
+  }
